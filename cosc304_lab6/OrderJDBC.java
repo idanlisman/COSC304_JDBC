@@ -9,12 +9,8 @@ University id:  <your university id>
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.Date;
 import java.util.Scanner;
 
 
@@ -41,11 +37,11 @@ public class OrderJDBC
     {
         OrderJDBC q = new OrderJDBC();
         q.connect();
-        q.init();
+//        q.init();
 
         // Application operations
         System.out.println(q.listAllCustomers());
-        q.listCustomerOrders("00001");
+        System.out.println(q.listCustomerOrders("00001"));
         q.listLineItemsForOrder("01000");
         q.computeOrderTotal("01000");
         q.addCustomer("11111", "Fred Smith");
@@ -58,7 +54,7 @@ public class OrderJDBC
 
         // Queries
         // Re-initialize all data
-        q.init();
+//        q.init();
         System.out.println(OrderJDBC.resultSetToString(q.query1(), 100));
         System.out.println(OrderJDBC.resultSetToString(q.query2(), 100));
         System.out.println(OrderJDBC.resultSetToString(q.query3(), 100));
@@ -110,7 +106,7 @@ public class OrderJDBC
      */
     public void init()
     {
-        String fileName = "order.sqksql";
+        String fileName = "order.sql";
 
         try
         {
@@ -148,10 +144,22 @@ public class OrderJDBC
     public String listAllCustomers() throws SQLException
     {
         System.out.println("Executing list all customers.");
-
         StringBuilder output = new StringBuilder();
 
         // TODO: Traverse ResultSet and use StringBuilder.append() to add columns/rows to output string
+        String id = "CustomerId", name = "CustomerName";
+
+        String query = "SELECT * FROM Customer";
+        Statement stmt = this.con.createStatement();
+        ResultSet result = stmt.executeQuery(query);
+
+        output.append(id).append(", ").append(name).append("\n");;
+        while (result.next()) {
+            output.append(result.getString(id))
+                    .append(", ")
+                    .append(result.getString(name))
+                    .append("\n");;
+        }
 
         return output.toString();
     }
@@ -172,7 +180,30 @@ public class OrderJDBC
     public String listCustomerOrders(String customerId) throws SQLException
     {
         // TODO: Similar to listAllCustomers(), execute query and store results in a StringBuilder, then output as a String
-        return "";
+        StringBuilder output = new StringBuilder();
+        String oid = "OrderId", date = "OrderDate", cid = "CustomerId", eid = "EmployeeId" , total = "Total";
+
+        String query = "SELECT * FROM Orders WHERE " + cid + " = '" + customerId + "'";
+        System.out.println(query);
+        Statement stmt = this.con.createStatement();
+        ResultSet result = stmt.executeQuery(query);
+
+        output.append(oid).append(", ")
+                .append(date).append(", ")
+                .append(cid).append(", ")
+                .append(eid).append(", ")
+                .append(total)
+                .append("\n");
+        while (result.next()) {
+            output.append(result.getString(oid)).append(", ")
+                    .append(result.getDate(date)).append(", ")
+                    .append(result.getString(cid)).append(", ")
+                    .append(result.getString(oid)).append(", ")
+                    .append(result.getString(eid)).append(", ")
+                    .append(result.getDouble(total))
+                    .append("\n");
+        }
+        return output.toString();
     }
 
     /**
@@ -185,7 +216,11 @@ public class OrderJDBC
     public ResultSet listLineItemsForOrder(String orderId) throws SQLException
     {
         // TODO: Use a PreparedStatement for this query.  Return the ResultSet.
-        return null;
+        String query = "SELECT * FROM OrderedProduct WHERE OrderId = ?";
+
+        PreparedStatement stmt = this.con.prepareStatement(query);
+        stmt.setString(1, orderId);
+        return stmt.executeQuery();
     }
 
     /**
@@ -199,7 +234,15 @@ public class OrderJDBC
     public ResultSet computeOrderTotal(String orderId) throws SQLException
     {
         // TODO: Use a PreparedStatement for this query.  Return the ResultSet.
-        return null;
+        String query = "" +
+                "SELECT SUM(Price) as orderTotal " +
+                "FROM OrderedProduct " +
+                "WHERE OrderId = ? " +
+                "GROUP BY OrderId";
+
+        PreparedStatement stmt = this.con.prepareStatement(query);
+        stmt.setString(1, orderId);
+        return stmt.executeQuery();
     }
 
     /**
@@ -209,6 +252,11 @@ public class OrderJDBC
     public void addCustomer(String customerId, String customerName) throws SQLException
     {
         // TODO: Use a PreparedStatement for this INSERT.
+        String query = "INSERT INTO Customer VALUES (?, ?)";
+        PreparedStatement stmt = this.con.prepareStatement(query);
+        stmt.setString(1, customerId);
+        stmt.setString(2, customerName);
+        stmt.executeUpdate();
     }
 
     /**
@@ -219,6 +267,10 @@ public class OrderJDBC
     public void deleteCustomer(String customerId) throws SQLException
     {
         // TODO: Use a PreparedStatement for this DELETE.
+        String query = "DELETE FROM Customer WHERE CustomerId = ?";
+        PreparedStatement stmt = this.con.prepareStatement(query);
+        stmt.setString(1, customerId);
+        stmt.executeUpdate();
     }
 
     /**
