@@ -158,9 +158,10 @@ public class OrderJDBC
             output.append(result.getString(id))
                     .append(", ")
                     .append(result.getString(name))
-                    .append("\n");;
+                    .append("\n");
         }
 
+        output.setLength(output.length() - 1);
         return output.toString();
     }
 
@@ -198,11 +199,11 @@ public class OrderJDBC
             output.append(result.getString(oid)).append(", ")
                     .append(result.getDate(date)).append(", ")
                     .append(result.getString(cid)).append(", ")
-                    .append(result.getString(oid)).append(", ")
                     .append(result.getString(eid)).append(", ")
-                    .append(result.getDouble(total))
-                    .append("\n");
+                    .append(String.format("%.2f", result.getDouble(total)))                    .append("\n");
         }
+
+        output.setLength(output.length() - 1);
         return output.toString();
     }
 
